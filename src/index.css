@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom kid-friendly styles and playful interactive effects */
+@layer components {
+  .btn-bounce {
+    @apply transition-all duration-300 transform active:scale-95 hover:scale-105;
+  }
+  
+  .card-play {
+    @apply transition-all duration-300 transform hover:-translate-y-2 hover:shadow-kid-xl shadow-kid-md;
+  }
+}
+
+/* Custom rounded chunky scrollbar for playful feel */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FEF3C7; /* amber-100 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF6B6B; /* brand-pink */
+  border: 3px solid #FEF3C7;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FF4A4A;
+}
+
+/* Subtle background cloud animations */
+@keyframes drift {
+  0% { transform: translateX(0px); }
+  50% { transform: translateX(15px); }
+  100% { transform: translateX(0px); }
+}
+
+.cloud-drift {
+  animation: drift 6s ease-in-out infinite;
+}

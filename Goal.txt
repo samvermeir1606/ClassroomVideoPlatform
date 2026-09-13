@@ -1,0 +1,117 @@
+Project Goal:
+Create a "Safe YouTube Classroom Player". It is a static Single Page Application (SPA) built for young students. It allows them to navigate curated YouTube playlists and watch videos without any possibility of clicking through to YouTube.com, seeing recommendations, or encountering external links.
+
+Deployment & Hosting Constraint:
+The app will be hosted on GitHub Pages from a public repository. No API secrets can be exposed in the frontend code.
+
+Tech Stack Recommendation:
+
+Framework: React (via Vite)
+
+Styling: Tailwind CSS (for quick, kid-friendly UI)
+
+Routing: React Router (for navigation)
+
+API Interaction: Standard YouTube IFrame API (window.YT)
+
+1. Data Architecture & Configuration (The "No Secrets" Solution)
+Since this is a public GitHub repository, we cannot expose a YouTube Data API key in the client-side code to fetch playlist data dynamically on page load.
+
+Instruction for the AI:
+Create a Node.js pre-build script (scripts/fetch-playlists.js).
+
+Create a configuration file at src/config.js that exports an array of standard YouTube Playlist URLs or Playlist IDs. This is where the teacher will add their playlists.
+
+The pre-build script should read this config file, use the YouTube Data API to fetch the playlist titles, and the video titles/thumbnails inside them.
+
+The script should output a static JSON file to src/data/playlists.json.
+
+The React app will purely read from this local playlists.json file.
+(Note to developer: You will set your YOUTUBE_API_KEY as a GitHub Secret, and run this script during the GitHub Actions deployment workflow before building the Vite app).
+
+2. Application Flow & UI/UX Requirements
+The app should have three main routes. The UI should be colorful, accessible, use large bold fonts, and feature large clickable cards for children.
+
+Route 1: Main Page (/)
+
+Reads playlists.json.
+
+Displays a grid of available Playlists.
+
+Each card shows the Playlist Title and the thumbnail of the first video in that playlist.
+
+Clicking a card navigates to the Playlist Page.
+
+Route 2: Playlist Page (/playlist/:playlistId)
+
+Displays a "Back to Home" button.
+
+Displays a grid of all videos within the selected playlist.
+
+Each card shows the Video Title and the hqdefault YouTube thumbnail.
+
+Clicking a video navigates to the Video Page.
+
+Route 3: Video Page (/video/:videoId)
+
+Displays a "Back to Playlist" button.
+
+Contains the "Safe Player" component (detailed below).
+
+3. The "Safe Player" Implementation (CRITICAL)
+This is the most important part of the app. It must be physically impossible for a child to interact with the YouTube iframe directly.
+
+Instruction for the AI:
+Create a SafePlayer component. You must implement the following DOM structure and YouTube IFrame API logic:
+
+A. The DOM Structure ("The Shield"):
+You must wrap the YouTube iframe in a relative container, and place an absolute positioned transparent <div> directly on top of it.
+
+<div className="relative w-full aspect-video bg-black">
+  {/* The YouTube IFrame mounts here */}
+  <div id="youtube-player" className="w-full h-full absolute inset-0 z-0"></div>
+  
+  {/* THE SHIELD: Invisible layer blocking all mouse/touch events from reaching the iframe */}
+  <div className="absolute inset-0 w-full h-full z-10 bg-transparent"></div>
+</div>
+
+B. YouTube IFrame API Parameters:
+Initialize the YouTube player with these specific playerVars to minimize branding and default behavior:
+
+controls: 0 (Hides default player controls)
+
+disablekb: 1 (Disables keyboard shortcuts)
+
+modestbranding: 1 (Hides YouTube logo)
+
+rel: 0 (Restricts related videos to the same channel)
+
+iv_load_policy: 3 (Hides video annotations)
+
+C. Custom Controls UI:
+Because the shield blocks clicks, build a custom control bar below the video container. It must include:
+
+Play/Pause Button: Toggles player.playVideo() and player.pauseVideo(). Track the state using the API's onStateChange event.
+
+Scrubbing Timeline: An <input type="range" />.
+
+Needs an interval (e.g., every 500ms) that calls player.getCurrentTime() to update the slider's value while playing.
+
+When the user drags the slider, call player.seekTo(value, true) to scrub the video.
+
+Show the current time and total time (using player.getDuration()) in a MM:SS format next to the slider.
+
+4. Code Generation Deliverables Requested from the AI:
+Please generate:
+
+The package.json with necessary dependencies.
+
+The vite.config.js (configured for GitHub Pages base path).
+
+The Node.js build script (scripts/fetch-playlists.js).
+
+The src/config.js template.
+
+The React components for the Routing, Main Page, Playlist Page, and the SafePlayer component.
+
+A sample GitHub Actions .github/workflows/deploy.yml that runs the script and deploys to GH Pages.
