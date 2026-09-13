@@ -190,7 +190,7 @@ export default function SafePlayer({ videoId }) {
         {(!isReady || isBuffering) && (
           <div className="absolute inset-0 bg-neutral-900 z-30 flex flex-col items-center justify-center text-white font-bold text-xl space-y-4">
             <div className="animate-spin text-5xl">🎈</div>
-            <div className="text-amber-300 animate-pulse tracking-wide">Loading Video Magic...</div>
+            <div className="text-amber-300 animate-pulse tracking-wide">Even geduld... 🎈</div>
           </div>
         )}
       </div>
@@ -233,7 +233,7 @@ export default function SafePlayer({ videoId }) {
             }`}
           >
             <span className="text-2xl">{isPlaying ? '⏸️' : '▶️'}</span>
-            <span>{isPlaying ? 'PAUSE' : 'PLAY!'}</span>
+            <span>{isPlaying ? 'PAUZE' : 'SPEEL!'}</span>
           </button>
 
           {/* Volume and Status Indicators */}
@@ -241,7 +241,7 @@ export default function SafePlayer({ videoId }) {
             <button
               onClick={handleToggleMute}
               className="text-2xl btn-bounce p-1 select-none"
-              title={isMuted ? "Unmute" : "Mute"}
+              title={isMuted ? "Geluidsdemper" : "Geluid"}
             >
               {isMuted || volume === 0 ? '🔇' : '🔊'}
             </button>
@@ -256,11 +256,6 @@ export default function SafePlayer({ videoId }) {
             <span className="text-sm font-black text-slate-600 select-none w-8 text-center">
               {isMuted ? 0 : volume}%
             </span>
-          </div>
-
-          {/* Safety Notice Label */}
-          <div className="hidden md:flex items-center space-x-2 text-brand-green font-bold bg-green-50 px-4 py-2 rounded-2xl border border-green-200 select-none">
-            <span>🛡️ Safe Mode Active</span>
           </div>
         </div>
 

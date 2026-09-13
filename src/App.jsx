@@ -16,26 +16,23 @@ export default function App() {
             <Link to="/" className="flex items-center space-x-3 group">
               <span className="text-3xl md:text-4xl group-hover:rotate-12 transition-transform">📺</span>
               <span className="font-black text-xl md:text-2xl text-slate-800 tracking-tight">
-                Safe<span className="text-brand-pink">Classroom</span>
+                Klas<span className="text-brand-pink">TV</span>
               </span>
             </Link>
 
             <div className="flex items-center space-x-4">
-              <span className="hidden md:inline-block bg-brand-green/15 text-brand-green border border-brand-green/30 text-xs font-black px-4 py-1.5 rounded-full select-none">
-                🔒 Safe Player Mode Active
-              </span>
               <Link 
                 to="/" 
                 className="px-5 py-2 bg-brand-pink text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-sm border-2 border-red-300"
               >
-                🏠 Home
+                Start 🏠
               </Link>
             </div>
           </div>
         </header>
 
         {/* Main Workspace */}
-        <main className="flex-grow">
+        <main className="flex-grow pb-12">
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/playlist/:playlistId" element={<PlaylistPage />} />
@@ -44,18 +41,6 @@ export default function App() {
             <Route path="*" element={<MainPage />} />
           </Routes>
         </main>
-
-        {/* Playful Child-Friendly Footer */}
-        <footer className="bg-slate-900 text-slate-400 py-8 border-t-8 border-amber-300 text-center select-none font-bold">
-          <div className="max-w-7xl mx-auto px-4 space-y-2">
-            <p className="text-white text-base">
-              🍎 Handcrafted with ❤️ for kids and classroom safety.
-            </p>
-            <p className="text-xs text-slate-500">
-              No ads • No tracking • No recommendations • Just learning!
-            </p>
-          </div>
-        </footer>
       </div>
     </Router>
   );

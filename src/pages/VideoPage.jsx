@@ -26,19 +26,19 @@ export default function VideoPage() {
 
   // Find current video details
   const video = playlist?.videos?.find(v => v.id === videoId);
-  const videoTitle = video ? video.title : "Cool Educational Video";
+  const videoTitle = video ? video.title : "Video";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10">
+    <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
       {/* Top Navigation Row */}
-      <div className="flex items-center justify-between mb-6 md:mb-8 flex-wrap gap-4">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         {playlist ? (
           <Link 
             to={`/playlist/${playlistId}`}
             className="inline-flex items-center space-x-2 px-6 py-3 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
           >
             <span>⬅️</span>
-            <span>Back to Playlist</span>
+            <span>Terug naar lijst</span>
           </Link>
         ) : (
           <Link 
@@ -46,7 +46,7 @@ export default function VideoPage() {
             className="inline-flex items-center space-x-2 px-6 py-3 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
           >
             <span>🏠</span>
-            <span>Go Back Home</span>
+            <span>Terug</span>
           </Link>
         )}
 
@@ -55,7 +55,7 @@ export default function VideoPage() {
           to="/"
           className="inline-flex items-center space-x-2 px-5 py-3 bg-white border-4 border-brand-green text-brand-green hover:bg-brand-green hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
         >
-          <span>🏠 Home</span>
+          <span>🏠 Start</span>
         </Link>
       </div>
 
@@ -67,19 +67,11 @@ export default function VideoPage() {
           {/* Safe Player Wrapper */}
           <SafePlayer videoId={videoId} />
 
-          {/* Video Information Card */}
-          <div className="bg-white border-4 border-amber-300 rounded-[2rem] p-6 shadow-kid-md">
-            {playlist && (
-              <span className="inline-block px-3.5 py-1 bg-amber-100 text-slate-700 font-extrabold rounded-full text-xs mb-3 border border-amber-200">
-                📚 Playlist: {playlist.title}
-              </span>
-            )}
-            <h1 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight mb-2">
+          {/* Simple Video Information Card */}
+          <div className="bg-white border-4 border-amber-300 rounded-[1.5rem] p-5 shadow-kid-md">
+            <h1 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
               {videoTitle}
             </h1>
-            <p className="text-slate-500 font-bold text-sm">
-              📺 Watching in Safe Kid-Classroom Mode. All YouTube ads and recommendations are blocked.
-            </p>
           </div>
         </div>
 
@@ -88,11 +80,10 @@ export default function VideoPage() {
           <div className="bg-white border-4 border-brand-pink rounded-[2.5rem] p-6 shadow-kid-lg flex flex-col h-full max-h-[600px] lg:max-h-[700px] overflow-hidden">
             
             {/* Sidebar Title */}
-            <div className="pb-4 border-b-4 border-dashed border-slate-100 flex items-center space-x-2 mb-4">
+            <div className="pb-3 border-b-4 border-dashed border-slate-100 flex items-center space-x-2 mb-4">
               <span className="text-2xl">🎒</span>
               <div>
-                <h3 className="font-black text-lg text-slate-800 leading-tight">Next Lessons</h3>
-                <p className="text-slate-400 font-bold text-xs">Playlist Progress</p>
+                <h3 className="font-black text-lg text-slate-800 leading-tight">Volgende</h3>
               </div>
             </div>
 
@@ -127,8 +118,8 @@ export default function VideoPage() {
 
                     {/* Lesson Meta */}
                     <div className="flex-grow min-w-0">
-                      <span className={`block text-[11px] font-black tracking-wider ${isCurrent ? 'text-brand-pink' : 'text-slate-400'}`}>
-                        {isCurrent ? '⭐ NOW PLAYING' : `LESSON ${idx + 1}`}
+                      <span className={`block text-[10px] font-black tracking-wider ${isCurrent ? 'text-brand-pink' : 'text-slate-400'}`}>
+                        {isCurrent ? '⭐ NU BEZIG' : `VIDEO ${idx + 1}`}
                       </span>
                       <h4 className="text-xs font-extrabold text-slate-700 leading-tight truncate">
                         {item.title}
