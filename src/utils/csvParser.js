@@ -31,7 +31,28 @@ export function slugify(text) {
     .replace(/\-\-+/g, '-');        // Replace multiple - with single -
 }
 
-// Simple, extremely robust CSV parser that splits by the last comma in the row
+// Quote-aware CSV line splitter to handle commas inside text fields correctly
+export function splitCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+// Simple, extremely robust CSV parser that splits by comma, parses exactly the first two columns and ignores everything else
 export function parseGoogleSheetsCSV(csvText) {
   const lines = csvText.split(/\r?\n/);
   const rawPlaylistsMap = new Map();
@@ -49,17 +70,19 @@ export function parseGoogleSheetsCSV(csvText) {
     const line = lines[i].trim();
     if (!line) continue;
     
-    // Split by the LAST comma to separate the rightmost column (Playlist Title)
-    const lastCommaIdx = line.lastIndexOf(',');
-    if (lastCommaIdx === -1) continue; // invalid CSV row
+    const cells = splitCSVLine(line);
+    if (cells.length < 2) continue; // Skip if there are fewer than 2 columns
     
-    const col1 = line.substring(0, lastCommaIdx).replace(/^"|"$/g, '').trim();
-    const col2 = line.substring(lastCommaIdx + 1).replace(/^"|"$/g, '').trim();
+    const col1 = cells[0];
+    const col2 = cells[1];
     
     const videoId = extractVideoId(col1);
-    if (!videoId) continue; // skip if invalid
+    if (!videoId) continue; // Skip if invalid video URL/ID
     
-    const playlistName = col2;
+    // Extract playlist name strictly from the second column (index 1)
+    const playlistName = col2.replace(/^"|"$/g, '').trim();
+    if (!playlistName) continue; // Skip if playlist name is empty
+
     if (!rawPlaylistsMap.has(playlistName)) {
       rawPlaylistsMap.set(playlistName, []);
     }
