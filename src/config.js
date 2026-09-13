@@ -4,7 +4,7 @@
  * The fetch script will parse these and download the video details!
  */
 export const playlists = [
-  "https://youtube.com/playlist?list=PL2g5RgG0Jfe-uf-uKyJCZOeCtFmgqYud3&si=Ztq-kBdDXHN2XGqo",
+  "https://www.youtube.com/playlist?list=PLSpnSuAs_qsI",
   // Crash Course Kids (Science)
   "PL8dPuuaLjXtN0GE7qi7hC5hQ0a8570olD",
   
