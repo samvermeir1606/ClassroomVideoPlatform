@@ -5,6 +5,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Public Google Sheets CSV URL
+const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQcKV_CQSsN1Hiq3eTNMNpsCO9l0fYswC2Xredb6au3RSQvzKEsavW1j2uNxwbT-_K8yscaYVvvrY0g/pub?gid=0&single=true&output=csv";
+
 // Helper to extract video ID from standard/mobile/shorts YouTube links or raw IDs
 function extractVideoId(line) {
   if (typeof line !== 'string') return null;
@@ -62,92 +65,95 @@ const DEFAULT_MOCK_PLAYLISTS = [
   }
 ];
 
-async function run() {
-  console.log("=== Safe Classroom Player: Fetching Custom Playlists ===");
+// Simple, extremely robust CSV parser that splits by the last comma in the row
+function parseGoogleSheetsCSV(csvText) {
+  const rows = [];
+  const lines = csvText.split(/\r?\n/);
   
-  const dropboxToken = process.env.DROPBOX_ACCESS_TOKEN;
+  // Detect and skip header row if present
+  let startIndex = 0;
+  if (lines.length > 0) {
+    const firstLine = lines[0].toLowerCase();
+    if (firstLine.includes('url') || firstLine.includes('playlist') || firstLine.includes('video') || firstLine.includes('categorie')) {
+      startIndex = 1;
+    }
+  }
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // Split by the LAST comma to separate the rightmost column (Playlist Title)
+    const lastCommaIdx = line.lastIndexOf(',');
+    if (lastCommaIdx === -1) continue; // invalid CSV row
+    
+    const col1 = line.substring(0, lastCommaIdx).replace(/^"|"$/g, '').trim();
+    const col2 = line.substring(lastCommaIdx + 1).replace(/^"|"$/g, '').trim();
+    
+    if (col1 && col2) {
+      rows.push({
+        col1: col1,
+        playlistName: col2
+      });
+    }
+  }
+  return rows;
+}
+
+async function run() {
+  console.log("=== Safe Classroom Player: Fetching Google Sheets Playlists ===");
+  
   const youtubeApiKey = process.env.YOUTUBE_API_KEY;
   
   const targetDir = path.join(__dirname, '../src/data');
   const targetFile = path.join(targetDir, 'playlists.json');
   await fs.mkdir(targetDir, { recursive: true });
 
-  const rawPlaylists = []; // Array of { title, id, videoIds }
+  const rawPlaylistsMap = new Map(); // Name -> Array of Video IDs
 
-  // --- STEP 1: INGEST PLAYLIST FILES (DROPBOX OR LOCAL) ---
-  if (dropboxToken) {
-    console.log("🔑 DROPBOX_ACCESS_TOKEN found. Fetching playlists from Dropbox App Folder...");
-    try {
-      // 1. List files in App Folder root
-      const listUrl = "https://api.dropboxapi.com/2/files/list_folder";
-      const listResponse = await fetch(listUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${dropboxToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ path: "" })
-      });
-
-      if (!listResponse.ok) {
-        throw new Error(`Dropbox list_folder failed: ${listResponse.status} ${listResponse.statusText}`);
-      }
-
-      const listData = await listResponse.json();
-      const txtFiles = (listData.entries || []).filter(
-        item => item[".tag"] === "file" && item.name.toLowerCase().endsWith(".txt")
-      );
-
-      console.log(`Found ${txtFiles.length} playlist text file(s) inside Dropbox App Folder.`);
-
-      // 2. Download and parse each .txt file
-      for (const file of txtFiles) {
-        console.log(`Downloading Dropbox file: "${file.name}"...`);
-        const downloadUrl = "https://content.dropboxapi.com/2/files/download";
-        const downloadResponse = await fetch(downloadUrl, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${dropboxToken}`,
-            "Dropbox-API-Arg": JSON.stringify({ path: file.path_lower })
-          }
-        });
-
-        if (!downloadResponse.ok) {
-          console.error(`❌ Failed to download file "${file.name}" from Dropbox. Skipping.`);
-          continue;
-        }
-
-        const rawText = await downloadResponse.text();
-        const playlistTitle = path.basename(file.name, ".txt");
-        const videoIds = rawText
-          .split(/\r?\n/)
-          .map(extractVideoId)
-          .filter(Boolean);
-
-        if (videoIds.length > 0) {
-          rawPlaylists.push({
-            title: playlistTitle,
-            id: slugify(playlistTitle),
-            videoIds: videoIds
-          });
-        }
-      }
-    } catch (err) {
-      console.error("❌ Error fetching from Dropbox API:", err.message);
-      console.log("🔄 Gracefully falling back to local files...");
+  // --- STEP 1: FETCH AND PARSE GOOGLE SHEETS CSV ---
+  console.log(`Connecting to Google Sheets CSV URL: ${GOOGLE_SHEETS_CSV_URL}...`);
+  try {
+    const response = await fetch(GOOGLE_SHEETS_CSV_URL);
+    if (!response.ok) {
+      throw new Error(`Google Sheets fetch failed with status: ${response.status} ${response.statusText}`);
     }
+
+    const csvText = await response.text();
+    const rows = parseGoogleSheetsCSV(csvText);
+    console.log(`Successfully parsed ${rows.length} row(s) from Google Sheets.`);
+
+    // Group rows by playlist name and extract video IDs
+    for (const row of rows) {
+      const videoId = extractVideoId(row.col1);
+      
+      if (!videoId) {
+        console.warn(`⚠️ Skipped row: "${row.col1}" (could not extract a valid YouTube video ID)`);
+        continue;
+      }
+
+      if (!rawPlaylistsMap.has(row.playlistName)) {
+        rawPlaylistsMap.set(row.playlistName, []);
+      }
+      
+      // Prevent duplicates in the same playlist
+      if (!rawPlaylistsMap.get(row.playlistName).includes(videoId)) {
+        rawPlaylistsMap.get(row.playlistName).push(videoId);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error fetching from Google Sheets API:", err.message);
+    console.log("🔄 Gracefully falling back to local files or mock data...");
   }
 
-  // --- STEP 1B: LOCAL FOLDER FALLBACK (If Dropbox failed or was omitted) ---
-  if (rawPlaylists.length === 0) {
+  // --- STEP 1B: LOCAL FOLDER FALLBACK (If Google Sheets failed) ---
+  if (rawPlaylistsMap.size === 0) {
     const localPlaylistsDir = path.join(__dirname, '../playlists');
     console.log(`Scanning local folder for fallback playlists: ${localPlaylistsDir}...`);
     
     try {
       const files = await fs.readdir(localPlaylistsDir);
       const txtFiles = files.filter(f => f.toLowerCase().endsWith('.txt'));
-
-      console.log(`Found ${txtFiles.length} local playlist text file(s).`);
 
       for (const file of txtFiles) {
         const filePath = path.join(localPlaylistsDir, file);
@@ -159,27 +165,29 @@ async function run() {
           .filter(Boolean);
 
         if (videoIds.length > 0) {
-          rawPlaylists.push({
-            title: playlistTitle,
-            id: slugify(playlistTitle),
-            videoIds: videoIds
-          });
+          rawPlaylistsMap.set(playlistTitle, videoIds);
         }
       }
     } catch (err) {
-      console.log("⚠️ No local playlists/ folder found or failed to read it:", err.message);
+      console.log("⚠️ No local fallback playlists folder found:", err.message);
     }
   }
 
-  // --- STEP 1C: TOTAL FALLBACK TO HARDCODED MOCKS (If both empty) ---
-  if (rawPlaylists.length === 0) {
-    console.warn("⚠️ No playlists loaded from Dropbox or local folder! Writing pre-defined mock datasets.");
+  // --- STEP 1C: TOTAL FALLBACK TO HARDCODED MOCKS ---
+  if (rawPlaylistsMap.size === 0) {
+    console.warn("⚠️ No playlists loaded! Writing pre-defined mock datasets.");
     await fs.writeFile(targetFile, JSON.stringify(DEFAULT_MOCK_PLAYLISTS, null, 2), 'utf-8');
     console.log(`✅ Default Mock playlists written successfully to: ${targetFile}`);
     return;
   }
 
   // --- STEP 2: METADATA ENRICHMENT VIA YOUTUBE API ---
+  const rawPlaylists = Array.from(rawPlaylistsMap.entries()).map(([title, videoIds]) => ({
+    title,
+    id: slugify(title),
+    videoIds
+  }));
+
   const finalPlaylists = [];
   const allVideoIds = rawPlaylists.reduce((acc, p) => acc.concat(p.videoIds), []);
   const uniqueVideoIds = Array.from(new Set(allVideoIds));
@@ -189,7 +197,7 @@ async function run() {
     console.log(`🔑 YOUTUBE_API_KEY found. Fetching titles for ${uniqueVideoIds.length} unique video(s) from YouTube API...`);
     
     try {
-      // Chunk request in sizes of 50 to prevent URL overflow
+      // Chunk request in sizes of 50
       for (let i = 0; i < uniqueVideoIds.length; i += 50) {
         const chunk = uniqueVideoIds.slice(i, i + 50);
         const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${chunk.join(',')}&key=${youtubeApiKey}`;

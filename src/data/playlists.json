@@ -2,44 +2,24 @@
   {
     "id": "liedjes",
     "title": "Liedjes",
-    "thumbnail": "https://img.youtube.com/vi/yCjJyiqpAuU/hqdefault.jpg",
+    "thumbnail": "https://img.youtube.com/vi/n6LVQ7M2cbQ/hqdefault.jpg",
     "videos": [
       {
-        "id": "yCjJyiqpAuU",
+        "id": "n6LVQ7M2cbQ",
         "title": "Video 1",
-        "thumbnail": "https://img.youtube.com/vi/yCjJyiqpAuU/hqdefault.jpg"
-      },
-      {
-        "id": "76_S_CWe5Z0",
-        "title": "Video 2",
-        "thumbnail": "https://img.youtube.com/vi/76_S_CWe5Z0/hqdefault.jpg"
-      },
-      {
-        "id": "e_04ZrNCSGQ",
-        "title": "Video 3",
-        "thumbnail": "https://img.youtube.com/vi/e_04ZrNCSGQ/hqdefault.jpg"
+        "thumbnail": "https://img.youtube.com/vi/n6LVQ7M2cbQ/hqdefault.jpg"
       }
     ]
   },
   {
-    "id": "wetenschap",
-    "title": "Wetenschap",
-    "thumbnail": "https://img.youtube.com/vi/nZ7g7_3VwCE/hqdefault.jpg",
+    "id": "andere",
+    "title": "Andere",
+    "thumbnail": "https://img.youtube.com/vi/LgcV2PDB-nY/hqdefault.jpg",
     "videos": [
       {
-        "id": "nZ7g7_3VwCE",
+        "id": "LgcV2PDB-nY",
         "title": "Video 1",
-        "thumbnail": "https://img.youtube.com/vi/nZ7g7_3VwCE/hqdefault.jpg"
-      },
-      {
-        "id": "37y6-0N-u68",
-        "title": "Video 2",
-        "thumbnail": "https://img.youtube.com/vi/37y6-0N-u68/hqdefault.jpg"
-      },
-      {
-        "id": "bcV3_g-6K5s",
-        "title": "Video 3",
-        "thumbnail": "https://img.youtube.com/vi/bcV3_g-6K5s/hqdefault.jpg"
+        "thumbnail": "https://img.youtube.com/vi/LgcV2PDB-nY/hqdefault.jpg"
       }
     ]
   }
