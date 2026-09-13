@@ -1,250 +1,253 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { playlists as configPlaylists } from '../src/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Helper to extract playlist ID from string/URL
-function extractPlaylistId(input) {
-  if (typeof input !== 'string') return null;
-  const trimmed = input.trim();
-  if (/^[A-Za-z0-9_-]+$/.test(trimmed)) {
+// Helper to extract video ID from standard/mobile/shorts YouTube links or raw IDs
+function extractVideoId(line) {
+  if (typeof line !== 'string') return null;
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith('#')) return null; // Ignore empty lines and comments
+  
+  // If it's already a raw 11-char ID
+  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) {
     return trimmed;
   }
-  try {
-    const url = new URL(trimmed);
-    const playlistId = url.searchParams.get('list');
-    if (playlistId) return playlistId;
-  } catch (e) {
-    // Ignore URL parse error, proceed to regex
+  
+  // Standard matching for youtu.be, embed, watch?v=, shorts, etc.
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = trimmed.match(regExp);
+  
+  if (match && match[2].length === 11) {
+    return match[2];
   }
-  const match = trimmed.match(/[?&]list=([A-Za-z0-9_-]+)/);
-  if (match) return match[1];
+  
   return null;
 }
 
-// Highly appealing, realistic mock data fallback in case YOUTUBE_API_KEY is not set
-const MOCK_PLAYLISTS = [
+// Slugs the playlist title so it makes a clean, URL-safe ID
+function slugify(text) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-');        // Replace multiple - with single -
+}
+
+// Built-in hardcoded mock playlists in case of absolute local fallback
+const DEFAULT_MOCK_PLAYLISTS = [
   {
-    id: "PL8dPuuaLjXtN0GE7qi7hC5hQ0a8570olD",
-    title: "Crash Course Kids - Space Science 🚀",
-    description: "Learn all about gravity, the solar system, and how the earth moves through space in this awesome kid-friendly compilation!",
+    id: "space-science",
+    title: "Space Science 🚀",
     thumbnail: "https://img.youtube.com/vi/EwY6p-r_hyU/hqdefault.jpg",
     videos: [
-      {
-        id: "EwY6p-r_hyU",
-        title: "Defining Gravity: Crash Course Kids #4.1",
-        thumbnail: "https://img.youtube.com/vi/EwY6p-r_hyU/hqdefault.jpg"
-      },
-      {
-        id: "tqSctS_E9bY",
-        title: "Earth's Rotation & Orbit: Crash Course Kids #8.1",
-        thumbnail: "https://img.youtube.com/vi/tqSctS_E9bY/hqdefault.jpg"
-      },
-      {
-        id: "164YwNl1wr0",
-        title: "What is a Star?: Crash Course Kids #34.2",
-        thumbnail: "https://img.youtube.com/vi/164YwNl1wr0/hqdefault.jpg"
-      },
-      {
-        id: "fV-F_VfbeDk",
-        title: "The Sun's Energy: Crash Course Kids #1.1",
-        thumbnail: "https://img.youtube.com/vi/fV-F_VfbeDk/hqdefault.jpg"
-      },
-      {
-        id: "Lz-G042Z7mI",
-        title: "Constellations & Sky Maps: Crash Course Kids #34.1",
-        thumbnail: "https://img.youtube.com/vi/Lz-G042Z7mI/hqdefault.jpg"
-      }
+      { id: "EwY6p-r_hyU", title: "Defining Gravity: Crash Course Kids #4.1", thumbnail: "https://img.youtube.com/vi/EwY6p-r_hyU/hqdefault.jpg" },
+      { id: "tqSctS_E9bY", title: "Earth's Rotation & Orbit: Crash Course Kids #8.1", thumbnail: "https://img.youtube.com/vi/tqSctS_E9bY/hqdefault.jpg" },
+      { id: "164YwNl1wr0", title: "What is a Star?: Crash Course Kids #34.2", thumbnail: "https://img.youtube.com/vi/164YwNl1wr0/hqdefault.jpg" }
     ]
   },
   {
-    id: "PL39_ud5aKSvnT-uO89_PzjhY_o9-B3pT9",
-    title: "SciShow Kids - Animal Science 🦁",
-    description: "Curious about nature and animals? Come learn how bees make honey, how octopuses camouflage, and why dogs are so friendly!",
+    id: "animal-science",
+    title: "Animal Science 🦁",
     thumbnail: "https://img.youtube.com/vi/nZ7g7_3VwCE/hqdefault.jpg",
     videos: [
-      {
-        id: "nZ7g7_3VwCE",
-        title: "How Do Bees Make Honey? 🐝 SciShow Kids",
-        thumbnail: "https://img.youtube.com/vi/nZ7g7_3VwCE/hqdefault.jpg"
-      },
-      {
-        id: "37y6-0N-u68",
-        title: "Meet the Giant Squid! 🦑 SciShow Kids",
-        thumbnail: "https://img.youtube.com/vi/37y6-0N-u68/hqdefault.jpg"
-      },
-      {
-        id: "bcV3_g-6K5s",
-        title: "Why is the Sky Blue? ☁️ SciShow Kids",
-        thumbnail: "https://img.youtube.com/vi/bcV3_g-6K5s/hqdefault.jpg"
-      },
-      {
-        id: "g7BHeQfCH4A",
-        title: "How Do Camels Live in the Desert? 🐪 SciShow Kids",
-        thumbnail: "https://img.youtube.com/vi/g7BHeQfCH4A/hqdefault.jpg"
-      },
-      {
-        id: "V8_bC_v63_M",
-        title: "Why Do Cats Purr? 🐱 SciShow Kids",
-        thumbnail: "https://img.youtube.com/vi/V8_bC_v63_M/hqdefault.jpg"
-      }
-    ]
-  },
-  {
-    id: "PLR3A34Y9u_808-Vv09tX9S8n4h807a9X_",
-    title: "Super Simple Songs - Sing Along! 🎶",
-    description: "Get up and bounce or sing along to classic nursery rhymes and cute animated educational songs perfect for toddlers and kindergarteners!",
-    thumbnail: "https://img.youtube.com/vi/yCjJyiqpAuU/hqdefault.jpg",
-    videos: [
-      {
-        id: "yCjJyiqpAuU",
-        title: "Twinkle Twinkle Little Star ⭐️ | Kids Songs",
-        thumbnail: "https://img.youtube.com/vi/yCjJyiqpAuU/hqdefault.jpg"
-      },
-      {
-        id: "76_S_CWe5Z0",
-        title: "Baby Shark 🦈 | Nursery Rhymes & Dance Songs",
-        thumbnail: "https://img.youtube.com/vi/76_S_CWe5Z0/hqdefault.jpg"
-      },
-      {
-        id: "e_04ZrNCSGQ",
-        title: "The Wheels On The Bus 🚌 | Nursery Rhymes",
-        thumbnail: "https://img.youtube.com/vi/e_04ZrNCSGQ/hqdefault.jpg"
-      },
-      {
-        id: "2PhLZE6LpNo",
-        title: "If You're Happy And You Know It! 👏 | Kids Songs",
-        thumbnail: "https://img.youtube.com/vi/2PhLZE6LpNo/hqdefault.jpg"
-      },
-      {
-        id: "tVlcKp3bWH8",
-        title: "Skidamarink a dink a dink ❤️ | L-O-V-E Kids Song",
-        thumbnail: "https://img.youtube.com/vi/tVlcKp3bWH8/hqdefault.jpg"
-      }
+      { id: "nZ7g7_3VwCE", title: "How Do Bees Make Honey? 🐝 SciShow Kids", thumbnail: "https://img.youtube.com/vi/nZ7g7_3VwCE/hqdefault.jpg" },
+      { id: "37y6-0N-u68", title: "Meet the Giant Squid! 🦑 SciShow Kids", thumbnail: "https://img.youtube.com/vi/37y6-0N-u68/hqdefault.jpg" },
+      { id: "bcV3_g-6K5s", title: "Why is the Sky Blue? ☁️ SciShow Kids", thumbnail: "https://img.youtube.com/vi/bcV3_g-6K5s/hqdefault.jpg" }
     ]
   }
 ];
 
 async function run() {
-  console.log("=== Safe Classroom Player: Fetching Playlists ===");
+  console.log("=== Safe Classroom Player: Fetching Custom Playlists ===");
   
-  const apiKey = process.env.YOUTUBE_API_KEY;
+  const dropboxToken = process.env.DROPBOX_ACCESS_TOKEN;
+  const youtubeApiKey = process.env.YOUTUBE_API_KEY;
+  
   const targetDir = path.join(__dirname, '../src/data');
   const targetFile = path.join(targetDir, 'playlists.json');
-
-  // Create src/data folder if it doesn't exist
   await fs.mkdir(targetDir, { recursive: true });
 
-  if (!apiKey) {
-    console.warn("⚠️  No YOUTUBE_API_KEY env variable found! Using beautiful mock dataset for local development.");
-    await fs.writeFile(targetFile, JSON.stringify(MOCK_PLAYLISTS, null, 2), 'utf-8');
-    console.log(`✅ Mock playlists written successfully to: ${targetFile}`);
-    return;
-  }
+  const rawPlaylists = []; // Array of { title, id, videoIds }
 
-  const playlistIds = configPlaylists
-    .map(extractPlaylistId)
-    .filter(Boolean);
-
-  if (playlistIds.length === 0) {
-    console.warn("⚠️  No valid playlist IDs or URLs found in config.js! Defaulting to Mock Data.");
-    await fs.writeFile(targetFile, JSON.stringify(MOCK_PLAYLISTS, null, 2), 'utf-8');
-    console.log(`✅ Mock playlists written successfully to: ${targetFile}`);
-    return;
-  }
-
-  console.log(`Found ${playlistIds.length} playlist(s) to fetch from YouTube API...`);
-
-  try {
-    const playlistsData = [];
-
-    for (const playlistId of playlistIds) {
-      console.log(`Fetching playlist metadata for: ${playlistId}...`);
-      
-      // Fetch playlist details (Title, Description, etc.)
-      const playlistDetailsUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`;
-      const playlistResponse = await fetch(playlistDetailsUrl);
-      
-      if (!playlistResponse.ok) {
-        throw new Error(`Failed to fetch playlist details for ${playlistId}: ${playlistResponse.statusText}`);
-      }
-      
-      const playlistJson = await playlistResponse.json();
-      if (!playlistJson.items || playlistJson.items.length === 0) {
-        console.warn(`⚠️  Playlist ${playlistId} not found on YouTube. Skipping.`);
-        continue;
-      }
-      
-      const item = playlistJson.items[0];
-      const title = item.snippet.title;
-      const description = item.snippet.description || '';
-      const thumbnail = item.snippet.thumbnails?.high?.url || 
-                        item.snippet.thumbnails?.medium?.url || 
-                        item.snippet.thumbnails?.default?.url || 
-                        `https://img.youtube.com/vi/unknown/hqdefault.jpg`;
-
-      console.log(`Fetching video items for playlist: "${title}"...`);
-      
-      // Fetch playlist items (videos)
-      const videosUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`;
-      const videosResponse = await fetch(videosUrl);
-      
-      if (!videosResponse.ok) {
-        throw new Error(`Failed to fetch videos for playlist ${playlistId}: ${videosResponse.statusText}`);
-      }
-      
-      const videosJson = await videosResponse.json();
-      const videos = (videosJson.items || [])
-        .map(v => {
-          const vSnippet = v.snippet;
-          const resourceId = vSnippet.resourceId || {};
-          const videoId = resourceId.videoId;
-          
-          if (!videoId) return null;
-          
-          const vTitle = vSnippet.title;
-          const vThumb = vSnippet.thumbnails?.high?.url || 
-                         vSnippet.thumbnails?.medium?.url || 
-                         vSnippet.thumbnails?.default?.url || 
-                         `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                         
-          return {
-            id: videoId,
-            title: vTitle,
-            thumbnail: vThumb
-          };
-        })
-        .filter(Boolean);
-
-      playlistsData.push({
-        id: playlistId,
-        title: title,
-        description: description,
-        thumbnail: thumbnail,
-        videos: videos
+  // --- STEP 1: INGEST PLAYLIST FILES (DROPBOX OR LOCAL) ---
+  if (dropboxToken) {
+    console.log("🔑 DROPBOX_ACCESS_TOKEN found. Fetching playlists from Dropbox App Folder...");
+    try {
+      // 1. List files in App Folder root
+      const listUrl = "https://api.dropboxapi.com/2/files/list_folder";
+      const listResponse = await fetch(listUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${dropboxToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ path: "" })
       });
-    }
 
-    if (playlistsData.length === 0) {
-      console.warn("⚠️  Could not fetch details for any configured playlists! Using mock data.");
-      await fs.writeFile(targetFile, JSON.stringify(MOCK_PLAYLISTS, null, 2), 'utf-8');
-    } else {
-      await fs.writeFile(targetFile, JSON.stringify(playlistsData, null, 2), 'utf-8');
-      console.log(`✅ Live playlist data successfully downloaded and written to: ${targetFile}`);
-    }
+      if (!listResponse.ok) {
+        throw new Error(`Dropbox list_folder failed: ${listResponse.status} ${listResponse.statusText}`);
+      }
 
-  } catch (error) {
-    console.error("❌ Error fetching live playlist data:", error.message);
-    console.log("🔄 Falling back to mock dataset so the build succeeds.");
-    await fs.writeFile(targetFile, JSON.stringify(MOCK_PLAYLISTS, null, 2), 'utf-8');
-    console.log(`✅ Mock playlists written successfully to: ${targetFile}`);
+      const listData = await listResponse.json();
+      const txtFiles = (listData.entries || []).filter(
+        item => item[".tag"] === "file" && item.name.toLowerCase().endsWith(".txt")
+      );
+
+      console.log(`Found ${txtFiles.length} playlist text file(s) inside Dropbox App Folder.`);
+
+      // 2. Download and parse each .txt file
+      for (const file of txtFiles) {
+        console.log(`Downloading Dropbox file: "${file.name}"...`);
+        const downloadUrl = "https://content.dropboxapi.com/2/files/download";
+        const downloadResponse = await fetch(downloadUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${dropboxToken}`,
+            "Dropbox-API-Arg": JSON.stringify({ path: file.path_lower })
+          }
+        });
+
+        if (!downloadResponse.ok) {
+          console.error(`❌ Failed to download file "${file.name}" from Dropbox. Skipping.`);
+          continue;
+        }
+
+        const rawText = await downloadResponse.text();
+        const playlistTitle = path.basename(file.name, ".txt");
+        const videoIds = rawText
+          .split(/\r?\n/)
+          .map(extractVideoId)
+          .filter(Boolean);
+
+        if (videoIds.length > 0) {
+          rawPlaylists.push({
+            title: playlistTitle,
+            id: slugify(playlistTitle),
+            videoIds: videoIds
+          });
+        }
+      }
+    } catch (err) {
+      console.error("❌ Error fetching from Dropbox API:", err.message);
+      console.log("🔄 Gracefully falling back to local files...");
+    }
   }
+
+  // --- STEP 1B: LOCAL FOLDER FALLBACK (If Dropbox failed or was omitted) ---
+  if (rawPlaylists.length === 0) {
+    const localPlaylistsDir = path.join(__dirname, '../playlists');
+    console.log(`Scanning local folder for fallback playlists: ${localPlaylistsDir}...`);
+    
+    try {
+      const files = await fs.readdir(localPlaylistsDir);
+      const txtFiles = files.filter(f => f.toLowerCase().endsWith('.txt'));
+
+      console.log(`Found ${txtFiles.length} local playlist text file(s).`);
+
+      for (const file of txtFiles) {
+        const filePath = path.join(localPlaylistsDir, file);
+        const rawText = await fs.readFile(filePath, 'utf-8');
+        const playlistTitle = path.basename(file, '.txt');
+        const videoIds = rawText
+          .split(/\r?\n/)
+          .map(extractVideoId)
+          .filter(Boolean);
+
+        if (videoIds.length > 0) {
+          rawPlaylists.push({
+            title: playlistTitle,
+            id: slugify(playlistTitle),
+            videoIds: videoIds
+          });
+        }
+      }
+    } catch (err) {
+      console.log("⚠️ No local playlists/ folder found or failed to read it:", err.message);
+    }
+  }
+
+  // --- STEP 1C: TOTAL FALLBACK TO HARDCODED MOCKS (If both empty) ---
+  if (rawPlaylists.length === 0) {
+    console.warn("⚠️ No playlists loaded from Dropbox or local folder! Writing pre-defined mock datasets.");
+    await fs.writeFile(targetFile, JSON.stringify(DEFAULT_MOCK_PLAYLISTS, null, 2), 'utf-8');
+    console.log(`✅ Default Mock playlists written successfully to: ${targetFile}`);
+    return;
+  }
+
+  // --- STEP 2: METADATA ENRICHMENT VIA YOUTUBE API ---
+  const finalPlaylists = [];
+  const allVideoIds = rawPlaylists.reduce((acc, p) => acc.concat(p.videoIds), []);
+  const uniqueVideoIds = Array.from(new Set(allVideoIds));
+  const videoDetailsMap = new Map(); // id -> { title, thumbnail }
+
+  if (youtubeApiKey && uniqueVideoIds.length > 0) {
+    console.log(`🔑 YOUTUBE_API_KEY found. Fetching titles for ${uniqueVideoIds.length} unique video(s) from YouTube API...`);
+    
+    try {
+      // Chunk request in sizes of 50 to prevent URL overflow
+      for (let i = 0; i < uniqueVideoIds.length; i += 50) {
+        const chunk = uniqueVideoIds.slice(i, i + 50);
+        const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${chunk.join(',')}&key=${youtubeApiKey}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`YouTube API returned status: ${response.status} ${response.statusText}`);
+        }
+        
+        const json = await response.json();
+        (json.items || []).forEach(item => {
+          const id = item.id;
+          const snippet = item.snippet;
+          const title = snippet.title;
+          const thumbnail = snippet.thumbnails?.maxres?.url ||
+                            snippet.thumbnails?.high?.url ||
+                            snippet.thumbnails?.medium?.url ||
+                            `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+          videoDetailsMap.set(id, { title, thumbnail });
+        });
+      }
+      console.log(`✅ Fetched details for ${videoDetailsMap.size} video(s) successfully!`);
+    } catch (err) {
+      console.error("❌ Error enrichment from YouTube API:", err.message);
+      console.log("🔄 Generating visual placeholders for missing video details.");
+    }
+  } else if (uniqueVideoIds.length > 0) {
+    console.log("⚠️ No YOUTUBE_API_KEY found. Building visual placeholders offline.");
+  }
+
+  // --- STEP 3: CONSTRUCT FINAL PLAYLIST STRUCTURE ---
+  for (const rawP of rawPlaylists) {
+    const videos = rawP.videoIds.map((videoId, idx) => {
+      const details = videoDetailsMap.get(videoId);
+      return {
+        id: videoId,
+        title: details ? details.title : `Video ${idx + 1}`,
+        thumbnail: details ? details.thumbnail : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      };
+    });
+
+    // Use first video thumbnail as the cover thumbnail of this custom playlist
+    const coverThumb = videos[0]?.thumbnail || "https://img.youtube.com/vi/unknown/hqdefault.jpg";
+
+    finalPlaylists.push({
+      id: rawP.id,
+      title: rawP.title,
+      thumbnail: coverThumb,
+      videos: videos
+    });
+  }
+
+  // --- STEP 4: SAVE OUTPUT ---
+  await fs.writeFile(targetFile, JSON.stringify(finalPlaylists, null, 2), 'utf-8');
+  console.log(`✅ Successfully compiled ${finalPlaylists.length} playlist(s) and written to: ${targetFile}`);
 }
 
 run().catch(err => {
-  console.error("Fatal Script Error:", err);
+  console.error("Fatal Compilation Error:", err);
   process.exit(1);
 });
