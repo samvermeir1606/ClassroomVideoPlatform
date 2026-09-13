@@ -5,12 +5,5 @@
  */
 export const playlists = [
   "https://www.youtube.com/playlist?list=PLSpnSuAs_qsI",
-  // Crash Course Kids (Science)
-  "PL8dPuuaLjXtN0GE7qi7hC5hQ0a8570olD",
-  
-  // SciShow Kids (Amazing Animals / Science)
-  "PL39_ud5aKSvnT-uO89_PzjhY_o9-B3pT9",
-  
-  // Super Simple Songs (Songs & Nursery Rhymes)
-  "https://www.youtube.com/playlist?list=PLR3A34Y9u_808-Vv09tX9S8n4h807a9X_"
+  "https://www.youtube.com/playlist?list=PLN7PQxO_Ku3k"
 ];
