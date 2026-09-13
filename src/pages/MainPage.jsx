@@ -1,19 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import playlistsData from '../data/playlists.json';
 
-export default function MainPage() {
+export default function MainPage({ playlists }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
       {/* Grid of Playlists */}
-      {playlistsData.length === 0 ? (
+      {!playlists || playlists.length === 0 ? (
         <div className="bg-white border-4 border-dashed border-amber-300 rounded-3xl p-12 text-center shadow-kid-md">
           <span className="text-5xl block mb-4">😮</span>
           <p className="text-xl font-extrabold text-slate-600">Geen mappen gevonden!</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {playlistsData.map((playlist, idx) => {
+          {playlists.map((playlist, idx) => {
             const colors = [
               { border: 'border-brand-pink', text: 'text-brand-pink', bg: 'bg-brand-pink' },
               { border: 'border-brand-blue', text: 'text-brand-blue', bg: 'bg-brand-blue' },

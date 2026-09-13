@@ -8,6 +8,11 @@
         "id": "n6LVQ7M2cbQ",
         "title": "Video 1",
         "thumbnail": "https://img.youtube.com/vi/n6LVQ7M2cbQ/hqdefault.jpg"
+      },
+      {
+        "id": "6D__H_DO2Xk",
+        "title": "Video 2",
+        "thumbnail": "https://img.youtube.com/vi/6D__H_DO2Xk/hqdefault.jpg"
       }
     ]
   },
@@ -20,6 +25,11 @@
         "id": "LgcV2PDB-nY",
         "title": "Video 1",
         "thumbnail": "https://img.youtube.com/vi/LgcV2PDB-nY/hqdefault.jpg"
+      },
+      {
+        "id": "0FA-cfj8TaE",
+        "title": "Video 2",
+        "thumbnail": "https://img.youtube.com/vi/0FA-cfj8TaE/hqdefault.jpg"
       }
     ]
   }

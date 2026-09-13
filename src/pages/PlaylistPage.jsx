@@ -1,12 +1,12 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import playlistsData from '../data/playlists.json';
+import VideoTitle from '../components/VideoTitle';
 
-export default function PlaylistPage() {
+export default function PlaylistPage({ playlists }) {
   const { playlistId } = useParams();
   
-  // Find current playlist
-  const playlist = playlistsData.find(p => p.id === playlistId);
+  // Find current playlist from the dynamic state
+  const playlist = playlists?.find(p => p.id === playlistId);
 
   if (!playlist) {
     return (
@@ -96,7 +96,7 @@ export default function PlaylistPage() {
                   {/* Video Title Card */}
                   <div className="p-4 flex-grow flex flex-col justify-between">
                     <h3 className="font-extrabold text-slate-800 text-base leading-snug line-clamp-2 group-hover:text-brand-pink transition-colors">
-                      {video.title}
+                      <VideoTitle videoId={video.id} fallback={video.title} />
                     </h3>
                     <div className="mt-2 pt-2 border-t-2 border-dashed border-slate-50 flex items-center justify-between text-xs font-black text-slate-400">
                       <span>KIJKEN! ▶️</span>

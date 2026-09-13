@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "fetch-playlists": "node scripts/fetch-playlists.js",
-    "prebuild": "npm run fetch-playlists",
     "build": "vite build",
     "preview": "vite preview"
   },

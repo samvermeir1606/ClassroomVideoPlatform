@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import SafePlayer from '../components/SafePlayer';
-import playlistsData from '../data/playlists.json';
+import VideoTitle from '../components/VideoTitle';
 
-export default function VideoPage() {
+export default function VideoPage({ playlists }) {
   const { videoId } = useParams();
   const location = useLocation();
 
@@ -14,11 +14,11 @@ export default function VideoPage() {
   // Fallback: If playlistId is missing, find the first playlist that contains this video
   let playlist = null;
   if (playlistId) {
-    playlist = playlistsData.find(p => p.id === playlistId);
+    playlist = playlists?.find(p => p.id === playlistId);
   }
   
   if (!playlist) {
-    playlist = playlistsData.find(p => p.videos && p.videos.some(v => v.id === videoId));
+    playlist = playlists?.find(p => p.videos && p.videos.some(v => v.id === videoId));
     if (playlist) {
       playlistId = playlist.id;
     }
@@ -112,7 +112,7 @@ export default function VideoPage() {
                         {isCurrent ? '⭐ NU BEZIG' : `VIDEO ${idx + 1}`}
                       </span>
                       <h4 className="text-xs font-extrabold text-slate-700 leading-tight truncate">
-                        {item.title}
+                        <VideoTitle videoId={item.id} fallback={item.title} />
                       </h4>
                     </div>
                   </Link>
