@@ -14,8 +14,8 @@ export default function PlaylistPage() {
         <div className="bg-white border-4 border-brand-pink rounded-3xl p-12 shadow-kid-md">
           <span className="text-6xl block mb-4">😿</span>
           <h2 className="text-3xl font-black text-slate-800 mb-2">Map niet gevonden</h2>
-          <Link to="/" className="inline-block px-8 py-4 bg-brand-pink text-white font-black text-lg rounded-2xl shadow-kid-md btn-bounce">
-            🏠 Terug naar start
+          <Link to="/" className="inline-block px-6 py-3 bg-brand-pink text-white font-black text-xl rounded-2xl shadow-kid-md btn-bounce">
+            🏠
           </Link>
         </div>
       </div>
@@ -28,10 +28,10 @@ export default function PlaylistPage() {
       <div className="mb-6">
         <Link 
           to="/" 
-          className="inline-flex items-center space-x-2 px-6 py-3 bg-white border-4 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
+          className="inline-flex items-center justify-center h-12 w-16 bg-white border-4 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-xl"
+          title="Terug"
         >
-          <span>⬅️</span>
-          <span>Terug naar start</span>
+          ⬅️
         </Link>
       </div>
 
@@ -49,12 +49,6 @@ export default function PlaylistPage() {
             {playlist.title}
           </h1>
         </div>
-      </div>
-
-      {/* Video Grid Header */}
-      <div className="mb-6 flex items-center space-x-3">
-        <span className="text-3xl">🍿</span>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Kies een video om te kijken</h2>
       </div>
 
       {/* Videos List Grid */}

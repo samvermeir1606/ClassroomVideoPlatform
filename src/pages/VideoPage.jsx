@@ -24,10 +24,6 @@ export default function VideoPage() {
     }
   }
 
-  // Find current video details
-  const video = playlist?.videos?.find(v => v.id === videoId);
-  const videoTitle = video ? video.title : "Video";
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
       {/* Top Navigation Row */}
@@ -35,44 +31,38 @@ export default function VideoPage() {
         {playlist ? (
           <Link 
             to={`/playlist/${playlistId}`}
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
+            className="inline-flex items-center justify-center h-12 w-16 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-xl"
+            title="Terug"
           >
-            <span>⬅️</span>
-            <span>Terug naar lijst</span>
+            ⬅️
           </Link>
         ) : (
           <Link 
             to="/"
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
+            className="inline-flex items-center justify-center h-12 w-16 bg-white border-4 border-brand-pink text-brand-pink hover:bg-brand-pink hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-xl"
+            title="Terug"
           >
-            <span>🏠</span>
-            <span>Terug</span>
+            ⬅️
           </Link>
         )}
 
-        {/* Home Button */}
+        {/* Home/Start Button */}
         <Link 
           to="/"
-          className="inline-flex items-center space-x-2 px-5 py-3 bg-white border-4 border-brand-green text-brand-green hover:bg-brand-green hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce"
+          className="inline-flex items-center justify-center h-12 w-16 bg-white border-4 border-brand-green text-brand-green hover:bg-brand-green hover:text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-xl"
+          title="Start"
         >
-          <span>🏠 Start</span>
+          🏠
         </Link>
       </div>
 
       {/* Main Two-Column Layout (Video Player + Sidebar) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
-        {/* Left Column: Player & Meta (Takes 2 columns on large screen) */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Left Column: Player (Takes 2 columns on large screen) */}
+        <div className="lg:col-span-2">
           {/* Safe Player Wrapper */}
           <SafePlayer videoId={videoId} />
-
-          {/* Simple Video Information Card */}
-          <div className="bg-white border-4 border-amber-300 rounded-[1.5rem] p-5 shadow-kid-md">
-            <h1 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
-              {videoTitle}
-            </h1>
-          </div>
         </div>
 
         {/* Right Column: Playlist Lesson Queue (Up Next) */}

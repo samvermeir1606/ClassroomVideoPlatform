@@ -16,16 +16,17 @@ export default function App() {
             <Link to="/" className="flex items-center space-x-3 group">
               <span className="text-3xl md:text-4xl group-hover:rotate-12 transition-transform">📺</span>
               <span className="font-black text-xl md:text-2xl text-slate-800 tracking-tight">
-                Klas<span className="text-brand-pink">TV</span>
+                Klas <span className="text-brand-pink">Filmpjes</span>
               </span>
             </Link>
 
             <div className="flex items-center space-x-4">
               <Link 
                 to="/" 
-                className="px-5 py-2 bg-brand-pink text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-sm border-2 border-red-300"
+                className="px-4 py-2.5 bg-brand-pink text-white font-black rounded-2xl shadow-kid-sm btn-bounce text-lg border-2 border-red-300"
+                title="Start"
               >
-                Start 🏠
+                🏠
               </Link>
             </div>
           </div>

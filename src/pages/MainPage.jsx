@@ -4,25 +4,7 @@ import playlistsData from '../data/playlists.json';
 
 export default function MainPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10">
-      {/* Toned Down Beautiful Header */}
-      <div className="bg-gradient-to-r from-amber-300 to-brand-yellow p-6 md:p-8 rounded-[2rem] shadow-kid-md border-4 border-amber-400 mb-8 text-center relative overflow-hidden">
-        {/* Playful Floating Shapes */}
-        <div className="absolute top-2 left-4 text-3xl cloud-drift opacity-60 select-none">☁️</div>
-        <div className="absolute bottom-2 right-6 text-3xl cloud-drift opacity-60 select-none" style={{ animationDelay: '3s' }}>☁️</div>
-        <div className="absolute top-1/2 right-12 text-xl animate-bounce select-none">🎈</div>
-
-        <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight drop-shadow-sm">
-          Kijk-Hoekje! 📺✨
-        </h1>
-      </div>
-
-      {/* Playlist Grid Heading */}
-      <div className="mb-6 flex items-center space-x-3">
-        <span className="text-3xl">🎒</span>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Kies een map om te kijken</h2>
-      </div>
-
+    <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
       {/* Grid of Playlists */}
       {playlistsData.length === 0 ? (
         <div className="bg-white border-4 border-dashed border-amber-300 rounded-3xl p-12 text-center shadow-kid-md">
@@ -67,7 +49,7 @@ export default function MainPage() {
 
                     {/* Cute hover play overlay */}
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="w-14 h-16 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-3xl transform scale-75 group-hover:scale-100 transition-all duration-300">
+                      <div className="w-14 h-14 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-3xl transform scale-75 group-hover:scale-100 transition-all duration-300">
                         🚀
                       </div>
                     </div>
@@ -82,9 +64,8 @@ export default function MainPage() {
                     </div>
 
                     <div className="mt-4 pt-4 border-t-2 border-dashed border-slate-100 flex items-center justify-between">
-                      <span className={`font-black text-base flex items-center space-x-1 ${design.text}`}>
-                        <span>Kijk nu!</span>
-                        <span className="group-hover:translate-x-1 transition-transform">➡️</span>
+                      <span className={`w-12 h-10 rounded-full flex items-center justify-center text-white text-lg font-black shadow-kid-sm ${design.bg} btn-bounce`}>
+                        ▶️
                       </span>
                       <span className="text-2xl group-hover:animate-bounce">🎬</span>
                     </div>
