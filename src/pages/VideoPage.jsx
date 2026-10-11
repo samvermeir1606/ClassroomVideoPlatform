@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import SafePlayer from '../components/SafePlayer';
 import VideoTitle from '../components/VideoTitle';
@@ -6,27 +6,6 @@ import VideoTitle from '../components/VideoTitle';
 export default function VideoPage({ playlists }) {
   const { videoId } = useParams();
   const location = useLocation();
-
-  // Theatre mode: bigger video, playlist moves below. Remembered between visits.
-  const [isTheatre, setIsTheatre] = useState(() => {
-    try {
-      return localStorage.getItem('theatre-mode') === '1';
-    } catch {
-      return false;
-    }
-  });
-
-  const handleToggleTheatre = () => {
-    setIsTheatre(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem('theatre-mode', next ? '1' : '0');
-      } catch {
-        // ignore
-      }
-      return next;
-    });
-  };
 
   // Parse playlist ID from query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -46,7 +25,7 @@ export default function VideoPage({ playlists }) {
   }
 
   return (
-    <div className={`${isTheatre ? 'lg:max-w-[1800px]' : ''} max-w-7xl mx-auto px-4 py-4 md:py-8`}>
+    <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
       {/* Top Navigation Row */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         {playlist ? (
@@ -78,23 +57,17 @@ export default function VideoPage({ playlists }) {
       </div>
 
       {/* Main Two-Column Layout (Video Player + Sidebar) */}
-      <div className={`grid grid-cols-1 gap-8 items-start ${isTheatre ? '' : 'lg:grid-cols-3'}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         
-        {/* Left Column: Player (Takes 2 columns on large screen, full width in theatre mode) */}
-        <div
-          className={isTheatre ? 'w-full mx-auto' : 'lg:col-span-2'}
-          // In theatre mode, keep video + controls within the screen height
-          style={isTheatre ? { maxWidth: 'max(640px, calc((100vh - 260px) * 16 / 9))' } : undefined}
-        >
+        {/* Left Column: Player (Takes 2 columns on large screen) */}
+        <div className="lg:col-span-2">
           {/* Safe Player Wrapper */}
-          <SafePlayer videoId={videoId} isTheatre={isTheatre} onToggleTheatre={handleToggleTheatre} />
+          <SafePlayer videoId={videoId} />
         </div>
 
         {/* Right Column: Playlist Lesson Queue (Up Next) */}
         {playlist && (
-          <div className={`bg-white border-4 border-brand-pink rounded-[2.5rem] p-6 shadow-kid-lg flex flex-col overflow-hidden ${
-            isTheatre ? '' : 'h-full max-h-[600px] lg:max-h-[700px]'
-          }`}>
+          <div className="bg-white border-4 border-brand-pink rounded-[2.5rem] p-6 shadow-kid-lg flex flex-col h-full max-h-[600px] lg:max-h-[700px] overflow-hidden">
             
             {/* Sidebar Title */}
             <div className="pb-3 border-b-4 border-dashed border-slate-100 flex items-center space-x-2 mb-4">
@@ -105,11 +78,7 @@ export default function VideoPage({ playlists }) {
             </div>
 
             {/* Scrolling Queue */}
-            <div className={`pr-1 flex-grow scrollbar-thin ${
-              isTheatre
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
-                : 'overflow-y-auto space-y-4'
-            }`}>
+            <div className="overflow-y-auto space-y-4 pr-1 flex-grow scrollbar-thin">
               {playlist.videos.map((item, idx) => {
                 const isCurrent = item.id === videoId;
                 

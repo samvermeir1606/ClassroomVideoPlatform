@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-export default function SafePlayer({ videoId, isTheatre = false, onToggleTheatre }) {
+export default function SafePlayer({ videoId }) {
   const [isReady, setIsReady] = useState(false);
   const [playerState, setPlayerState] = useState(-1); // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering
   const [currentTime, setCurrentTime] = useState(0);
@@ -304,22 +304,8 @@ export default function SafePlayer({ videoId, isTheatre = false, onToggleTheatre
             </span>
           </div>
 
-          {/* Screen size buttons: theatre mode + fullscreen */}
+          {/* Fullscreen button */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {onToggleTheatre && !isFullscreen && (
-              <button
-                onClick={onToggleTheatre}
-                className={`hidden lg:inline-flex flex-1 sm:flex-none items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-black border-2 btn-bounce select-none ${
-                  isTheatre
-                    ? 'bg-blue-500 text-white border-blue-300 shadow-[0_4px_0_0_#2563EB]'
-                    : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
-                }`}
-                title={isTheatre ? "Normale weergave" : "Theatermodus"}
-              >
-                <span className="text-xl">🎬</span>
-                <span>{isTheatre ? 'Klein' : 'Groot'}</span>
-              </button>
-            )}
             {canFullscreen && (
               <button
                 onClick={handleToggleFullscreen}
