@@ -1,15 +1,50 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-export default function SafePlayer({ videoId }) {
+export default function SafePlayer({ videoId, isTheatre = false, onToggleTheatre }) {
   const [isReady, setIsReady] = useState(false);
   const [playerState, setPlayerState] = useState(-1); // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(50);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const playerRef = useRef(null);
   const containerRef = useRef(null);
+  const wrapperRef = useRef(null);
+
+  // Fullscreen covers the video AND our own controls (YouTube's controls are disabled)
+  const canFullscreen = typeof document !== 'undefined' &&
+    !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
+      setIsFullscreen(!!fsElement && fsElement === wrapperRef.current);
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      const request = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (request) {
+        const result = request.call(el);
+        if (result && result.catch) {
+          result.catch((e) => console.error("Fullscreen failed:", e));
+        }
+      }
+    }
+  };
 
   // Load YouTube IFrame API and initialize player
   useEffect(() => {
@@ -165,11 +200,20 @@ export default function SafePlayer({ videoId }) {
   const isBuffering = playerState === 3;
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div
+      ref={wrapperRef}
+      className={`w-full flex flex-col items-center ${
+        isFullscreen ? 'h-screen bg-neutral-900 p-3 md:p-4' : ''
+      }`}
+    >
       {/* 1. Shielded Video Player Box */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-video bg-neutral-900 rounded-3xl overflow-hidden shadow-kid-xl border-[8px] border-amber-300 md:border-[12px] group"
+        className={`relative w-full bg-neutral-900 overflow-hidden group ${
+          isFullscreen
+            ? 'flex-1 min-h-0 rounded-2xl'
+            : 'aspect-video rounded-3xl shadow-kid-xl border-[8px] border-amber-300 md:border-[12px]'
+        }`}
       >
         {/* Mount point of YouTube API */}
         <div id="youtube-player" className="w-full h-full absolute inset-0 z-0"></div>
@@ -196,7 +240,9 @@ export default function SafePlayer({ videoId }) {
       </div>
 
       {/* 2. Custom kid-friendly Control Dashboard */}
-      <div className="w-full bg-white border-4 border-amber-300 mt-6 rounded-3xl p-4 md:p-6 shadow-kid-lg flex flex-col space-y-4 md:space-y-6">
+      <div className={`w-full bg-white border-4 border-amber-300 rounded-3xl shadow-kid-lg flex flex-col ${
+        isFullscreen ? 'mt-3 p-3 md:p-4 space-y-3' : 'mt-6 p-4 md:p-6 space-y-4 md:space-y-6'
+      }`}>
         
         {/* Scrubbing Timeline */}
         <div className="flex items-center space-x-3 w-full">
@@ -256,6 +302,34 @@ export default function SafePlayer({ videoId }) {
             <span className="text-sm font-black text-slate-600 select-none w-8 text-center">
               {isMuted ? 0 : volume}%
             </span>
+          </div>
+
+          {/* Screen size buttons: theatre mode + fullscreen */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {onToggleTheatre && !isFullscreen && (
+              <button
+                onClick={onToggleTheatre}
+                className={`hidden lg:inline-flex flex-1 sm:flex-none items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-black border-2 btn-bounce select-none ${
+                  isTheatre
+                    ? 'bg-blue-500 text-white border-blue-300 shadow-[0_4px_0_0_#2563EB]'
+                    : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                }`}
+                title={isTheatre ? "Normale weergave" : "Theatermodus"}
+              >
+                <span className="text-xl">🎬</span>
+                <span>{isTheatre ? 'Klein' : 'Groot'}</span>
+              </button>
+            )}
+            {canFullscreen && (
+              <button
+                onClick={handleToggleFullscreen}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-black border-2 btn-bounce select-none bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+                title={isFullscreen ? "Volledig scherm sluiten" : "Volledig scherm"}
+              >
+                <span className="text-xl">{isFullscreen ? '↩️' : '📺'}</span>
+                <span>{isFullscreen ? 'Sluiten' : 'Volledig scherm'}</span>
+              </button>
+            )}
           </div>
         </div>
 
