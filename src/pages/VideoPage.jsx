@@ -1,11 +1,12 @@
 import React from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import SafePlayer from '../components/SafePlayer';
 import VideoTitle from '../components/VideoTitle';
 
 export default function VideoPage({ playlists }) {
   const { videoId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Parse playlist ID from query parameters
   const queryParams = new URLSearchParams(location.search);
@@ -23,6 +24,13 @@ export default function VideoPage({ playlists }) {
       playlistId = playlist.id;
     }
   }
+
+  // Previous / next video within the playlist (used by the fullscreen player)
+  const videos = playlist?.videos || [];
+  const currentIndex = videos.findIndex(v => v.id === videoId);
+  const prevVideo = currentIndex > 0 ? videos[currentIndex - 1] : null;
+  const nextVideo = currentIndex >= 0 && currentIndex < videos.length - 1 ? videos[currentIndex + 1] : null;
+  const goToVideo = (video) => navigate(`/video/${video.id}?playlist=${playlistId}`, { replace: true });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
@@ -62,7 +70,11 @@ export default function VideoPage({ playlists }) {
         {/* Left Column: Player (Takes 2 columns on large screen) */}
         <div className="lg:col-span-2">
           {/* Safe Player Wrapper */}
-          <SafePlayer videoId={videoId} />
+          <SafePlayer
+            videoId={videoId}
+            onPrev={prevVideo ? () => goToVideo(prevVideo) : null}
+            onNext={nextVideo ? () => goToVideo(nextVideo) : null}
+          />
         </div>
 
         {/* Right Column: Playlist Lesson Queue (Up Next) */}

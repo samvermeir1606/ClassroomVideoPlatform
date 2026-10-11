@@ -1,22 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-export default function SafePlayer({ videoId }) {
+export default function SafePlayer({ videoId, onPrev, onNext }) {
   const [isReady, setIsReady] = useState(false);
   const [playerState, setPlayerState] = useState(-1); // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(50);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false); // browser fullscreen on the player
+  const [isOverlay, setIsOverlay] = useState(false); // page-filling overlay (used while the whole app is fullscreen)
+  const isExpanded = isFullscreen || isOverlay;
   
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
 
   // Fullscreen covers the video AND our own controls (YouTube's controls are disabled)
-  const canFullscreen = typeof document !== 'undefined' &&
-    !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
-
   useEffect(() => {
     const onFullscreenChange = () => {
       const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
@@ -30,19 +29,48 @@ export default function SafePlayer({ videoId }) {
     };
   }, []);
 
+  // Escape closes the overlay (in app fullscreen the Escape key is captured by the page)
+  // and the page behind it shouldn't scroll
+  useEffect(() => {
+    if (!isOverlay) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setIsOverlay(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isOverlay]);
+
   const handleToggleFullscreen = () => {
     const el = wrapperRef.current;
     if (!el) return;
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
+
+    if (isOverlay) {
+      setIsOverlay(false);
+      return;
+    }
+    if (isFullscreen) {
       (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-      const request = el.requestFullscreen || el.webkitRequestFullscreen;
-      if (request) {
-        const result = request.call(el);
-        if (result && result.catch) {
-          result.catch((e) => console.error("Fullscreen failed:", e));
-        }
-      }
+      return;
+    }
+
+    // If the whole app is already fullscreen, fill the screen with an overlay instead,
+    // so closing the video never takes the app out of fullscreen.
+    const appIsFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (appIsFullscreen || !request) {
+      setIsOverlay(true);
+      return;
+    }
+    const result = request.call(el);
+    if (result && result.catch) {
+      result.catch((e) => {
+        console.error("Fullscreen failed:", e);
+        setIsOverlay(true);
+      });
     }
   };
 
@@ -203,14 +231,14 @@ export default function SafePlayer({ videoId }) {
     <div
       ref={wrapperRef}
       className={`w-full flex flex-col items-center ${
-        isFullscreen ? 'h-screen bg-neutral-900 p-3 md:p-4' : ''
+        isExpanded ? 'fixed inset-0 z-50 h-screen bg-neutral-900 p-3 md:p-4' : ''
       }`}
     >
       {/* 1. Shielded Video Player Box */}
       <div 
         ref={containerRef}
         className={`relative w-full bg-neutral-900 overflow-hidden group ${
-          isFullscreen
+          isExpanded
             ? 'flex-1 min-h-0 rounded-2xl'
             : 'aspect-video rounded-3xl shadow-kid-xl border-[8px] border-amber-300 md:border-[12px]'
         }`}
@@ -241,7 +269,7 @@ export default function SafePlayer({ videoId }) {
 
       {/* 2. Custom kid-friendly Control Dashboard */}
       <div className={`w-full bg-white border-4 border-amber-300 rounded-3xl shadow-kid-lg flex flex-col ${
-        isFullscreen ? 'mt-3 p-3 md:p-4 space-y-3' : 'mt-6 p-4 md:p-6 space-y-4 md:space-y-6'
+        isExpanded ? 'mt-3 p-3 md:p-4 space-y-3' : 'mt-6 p-4 md:p-6 space-y-4 md:space-y-6'
       }`}>
         
         {/* Scrubbing Timeline */}
@@ -269,10 +297,21 @@ export default function SafePlayer({ videoId }) {
 
         {/* Playback Controls & Volume Row */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
-          {/* Main Action Button */}
+          {/* Main Action Button (with previous/next while fullscreen) */}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+          {isExpanded && (
+            <button
+              onClick={onPrev}
+              disabled={!onPrev}
+              className="px-4 py-3 rounded-2xl font-black text-xl border-2 btn-bounce select-none bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none"
+              title="Vorige video"
+            >
+              ⏮️
+            </button>
+          )}
           <button
             onClick={handlePlayPause}
-            className={`w-full sm:w-auto px-8 py-3 rounded-2xl text-white font-black text-xl flex items-center justify-center space-x-3 btn-bounce ${
+            className={`flex-1 sm:flex-none px-8 py-3 rounded-2xl text-white font-black text-xl flex items-center justify-center space-x-3 btn-bounce ${
               isPlaying 
                 ? 'bg-brand-pink shadow-[0_4px_0_0_#D14F4F] border-2 border-red-300' 
                 : 'bg-brand-green shadow-[0_4px_0_0_#4E9B58] border-2 border-green-300'
@@ -281,6 +320,17 @@ export default function SafePlayer({ videoId }) {
             <span className="text-2xl">{isPlaying ? '⏸️' : '▶️'}</span>
             <span>{isPlaying ? 'PAUZE' : 'SPEEL!'}</span>
           </button>
+          {isExpanded && (
+            <button
+              onClick={onNext}
+              disabled={!onNext}
+              className="px-4 py-3 rounded-2xl font-black text-xl border-2 btn-bounce select-none bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none"
+              title="Volgende video"
+            >
+              ⏭️
+            </button>
+          )}
+          </div>
 
           {/* Volume and Status Indicators */}
           <div className="flex items-center space-x-4 w-full sm:w-auto bg-amber-50 p-2 px-4 rounded-2xl border-2 border-amber-100">
@@ -306,16 +356,14 @@ export default function SafePlayer({ videoId }) {
 
           {/* Fullscreen button */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {canFullscreen && (
-              <button
-                onClick={handleToggleFullscreen}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-black border-2 btn-bounce select-none bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
-                title={isFullscreen ? "Volledig scherm sluiten" : "Volledig scherm"}
-              >
-                <span className="text-xl">{isFullscreen ? '↩️' : '📺'}</span>
-                <span>{isFullscreen ? 'Sluiten' : 'Volledig scherm'}</span>
-              </button>
-            )}
+            <button
+              onClick={handleToggleFullscreen}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center space-x-2 px-4 py-3 rounded-2xl font-black border-2 btn-bounce select-none bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100"
+              title={isExpanded ? "Volledig scherm sluiten" : "Volledig scherm"}
+            >
+              <span className="text-xl">{isExpanded ? '↩️' : '📺'}</span>
+              <span>{isExpanded ? 'Sluiten' : 'Volledig scherm'}</span>
+            </button>
           </div>
         </div>
 

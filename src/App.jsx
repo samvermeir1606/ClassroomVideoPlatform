@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import MainPage from './pages/MainPage';
 import PlaylistPage from './pages/PlaylistPage';
 import VideoPage from './pages/VideoPage';
+import AppFullscreenButton from './components/AppFullscreenButton';
 import { parseGoogleSheetsCSV } from './utils/csvParser';
 import fallbackPlaylists from './data/playlists.json'; // Statically loaded fallback in case network fails
 
@@ -66,6 +67,7 @@ export default function App() {
               >
                 🏠
               </Link>
+              <AppFullscreenButton />
             </div>
           </div>
         </header>
